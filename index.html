@@ -56,10 +56,23 @@
         )
       }
 
-      const Board = ({ snake }) => {
+      const Food = ({ food }) => {
+        const style = {
+          width: '30px',
+          height: '30px',
+          background: 'red',
+          gridColumn: food.x,
+          gridRow: food.y,
+        }
+
+        return <div style={style}></div>
+      }
+
+      const Board = ({ snake, food }) => {
         return (
           <main className="board">
             <Snake snake={snake} />
+            <Food food={food} />
           </main>
         )
       }
@@ -72,6 +85,10 @@
           { x: 6, y: 8 },
           { x: 7, y: 8 },
         ])
+        const [food, setFood] = React.useState({
+          x: Math.floor(Math.random() * 15) + 1,
+          y: Math.floor(Math.random() * 15) + 1,
+        })
 
         React.useEffect(() => {
           const onClick = () => {
@@ -102,6 +119,7 @@
           const interval = setInterval(() => {
             setSnake((prev) => {
               const head = prev[0]
+              const ateFood = newHead.x === food.x && newHead.y === food.y
               let newHead = { x: head.x, y: head.y }
 
               switch (direction) {
@@ -122,6 +140,15 @@
               newHead.x = ((newHead.x - 1 + 15) % 15) + 1
               newHead.y = ((newHead.y - 1 + 15) % 15) + 1
 
+              if (ateFood) {
+                setFood({
+                  x: Math.floor(Math.random() * 15) + 1,
+                  y: Math.floor(Math.random() * 15) + 1,
+                })
+
+                return [newHead, ...prev] // crece
+              }
+              
               return [newHead, ...prev.slice(0, length - 1)]
             })
           }, 1000)
@@ -129,7 +156,7 @@
           return () => clearInterval(interval)
         }, [direction, length])
 
-        return <Board snake={snake} />
+        return <Board snake={snake} food={food} />
       }
 
       const App = () => {
