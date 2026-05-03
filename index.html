@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lab7-web</title>
+  </head>
+  <style >
+    .board {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15,30px);
+    }
+
+  </style>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      import React, { StrictMode } from 'react'
+      import { createRoot } from 'react-dom/client'
+      import './index.css'
+
+      const root = document.getElementById('root')
+      const reactRoot = createRoot(root)
+
+      const Segment = ({ x, y }) => {
+        const style = {
+          width: '50px',
+          height: '50px',
+          background: 'green',
+          boxSizing: 'border-box',
+          border: '1px solid darkgreen',
+          gridColumn: x,
+          gridRow: y,
+        }
+
+        return <div style={style} />
+      }
+
+      const Game = () => {
+        const [direction, setDirection] = React.useState('ArrowRight')
+        const [length, setLength] = React.useState(3)
+        const [snake, setSnake] = React.useState([
+          { x: 5, y: 8 },
+          { x: 6, y: 8 },
+          { x: 7, y: 8 },
+        ])
+
+        // Click para aumentar longitud
+        React.useEffect(() => {
+          const onClick = () => {
+            setLength((o) => o + 1)
+          }
+
+          window.addEventListener('click', onClick)
+          return () => window.removeEventListener('click', onClick)
+        }, [])
+
+        // Teclas
+        React.useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (
+              e.key === 'ArrowUp' ||
+              e.key === 'ArrowDown' ||
+              e.key === 'ArrowLeft' ||
+              e.key === 'ArrowRight'
+            ) {
+              setDirection(e.key)
+            }
+          }
+
+          window.addEventListener('keydown', handleKeyDown)
+          return () => window.removeEventListener('keydown', handleKeyDown)
+        }, [])
+
+        // Movimiento automático
+        React.useEffect(() => {
+          const interval = setInterval(() => {
+            setSnake((prev) => {
+              const head = prev[0]
+              let newHead = { x: head.x, y: head.y }
+
+              switch (direction) {
+                case 'ArrowRight':
+                  newHead = { x: head.x + 1, y: head.y }
+                  break
+                case 'ArrowLeft':
+                  newHead = { x: head.x - 1, y: head.y }
+                  break
+                case 'ArrowUp':
+                  newHead = { x: head.x, y: head.y - 1 }
+                  break
+                case 'ArrowDown':
+                  newHead = { x: head.x, y: head.y + 1 }
+                  break
+              }
+
+              newHead.x = ((newHead.x - 1 + 15) % 15) + 1
+              newHead.y = ((newHead.y - 1 + 15) % 15) + 1
+
+              return [newHead, ...prev.slice(0, length - 1)]
+            })
+          }, 1000)
+
+          return () => clearInterval(interval)
+        }, [direction, length])
+
+        return (
+          <main className="board">
+            {snake.map((part, index) => (
+              <Segment key={index} x={part.x} y={part.y} />
+            ))}
+          </main>
+        )
+      }
+
+      const App = () => {
+        return <Game />
+      }
+
+      reactRoot.render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      )
+
+    </script>
+  </body>
+</html>
