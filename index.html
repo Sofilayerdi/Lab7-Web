@@ -77,9 +77,18 @@
         )
       }
 
+      const Score = ({ score }) => {
+        return (
+          <h2 style={{ marginBottom: '20px' }}>
+            Puntaje: {score}
+          </h2>
+        )
+      }   
+
       const Game = () => {
         const [direction, setDirection] = React.useState('ArrowRight')
         const [length, setLength] = React.useState(3)
+        const [score, setScore] = React.useState(0)
         const [snake, setSnake] = React.useState([
           { x: 5, y: 8 },
           { x: 6, y: 8 },
@@ -148,7 +157,9 @@
                   y: Math.floor(Math.random() * 15) + 1,
                 })
 
-                return [newHead, ...prev] // crece
+                setScore(s => s + 1)
+
+                return [newHead, ...prev] 
               }
               
               return [newHead, ...prev.slice(0, length - 1)]
@@ -158,7 +169,12 @@
           return () => clearInterval(interval)
         }, [direction, length])
 
-        return <Board snake={snake} food={food} />
+        return (
+          <>
+            <Score score={score} />
+            <Board snake={snake} food={food} />
+          </>
+        )
       }
 
       const App = () => {
