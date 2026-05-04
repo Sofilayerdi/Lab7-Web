@@ -12,6 +12,7 @@
       box-sizing: border-box;
     }
     body {
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -87,7 +88,7 @@
 
       const Game = () => {
         const [direction, setDirection] = React.useState('ArrowRight')
-        const [length, setLength] = React.useState(3)
+        const [gameOver, setGameOver] = React.useState(false)
         const [score, setScore] = React.useState(0)
         const [snake, setSnake] = React.useState([
           { x: 5, y: 8 },
@@ -98,15 +99,6 @@
           x: Math.floor(Math.random() * 15) + 1,
           y: Math.floor(Math.random() * 15) + 1,
         })
-
-        React.useEffect(() => {
-          const onClick = () => {
-            setLength((o) => o + 1)
-          }
-
-          window.addEventListener('click', onClick)
-          return () => window.removeEventListener('click', onClick)
-        }, [])
 
         React.useEffect(() => {
           const handleKeyDown = (e) => {
@@ -125,11 +117,14 @@
         }, [])
 
         React.useEffect(() => {
+          if (gameOver) return
+
           const interval = setInterval(() => {
             setSnake((prev) => {
               const head = prev[0]
               let newHead = { x: head.x, y: head.y }
 
+              // movimiento
               switch (direction) {
                 case 'ArrowRight':
                   newHead = { x: head.x + 1, y: head.y }
@@ -144,12 +139,24 @@
                   newHead = { x: head.x, y: head.y + 1 }
                   break
               }
-
-              const ateFood = newHead.x === food.x && newHead.y === food.y
-
-
+              
               newHead.x = ((newHead.x - 1 + 15) % 15) + 1
               newHead.y = ((newHead.y - 1 + 15) % 15) + 1
+
+              const hitSelf = prev.some(
+                (part, index) =>
+                  index !== 0 &&
+                  part.x === newHead.x &&
+                  part.y === newHead.y
+              )
+
+              if (hitSelf) {
+                setGameOver(true)
+                return prev
+              }
+
+              const ateFood =
+                newHead.x === food.x && newHead.y === food.y
 
               if (ateFood) {
                 setFood({
@@ -157,21 +164,22 @@
                   y: Math.floor(Math.random() * 15) + 1,
                 })
 
-                setScore(s => s + 1)
+                setScore((s) => s + 1)
 
                 return [newHead, ...prev] 
               }
-              
-              return [newHead, ...prev.slice(0, length - 1)]
+
+              return [newHead, ...prev.slice(0, prev.length - 1)]
             })
           }, 1000)
 
           return () => clearInterval(interval)
-        }, [direction, length])
+        }, [direction, gameOver, food])
 
         return (
           <>
             <Score score={score} />
+            {gameOver && <h1 style={{ color: 'red' }}>GAME OVER</h1>}
             <Board snake={snake} food={food} />
           </>
         )
