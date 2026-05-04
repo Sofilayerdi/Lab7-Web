@@ -22,6 +22,31 @@
       grid-template-columns: repeat(15, 32px);
       grid-template-rows: repeat(15, 32px);
       border: 2px solid red;
+      position: relative;
+   }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 10;
+    }
+
+    .overlay-title { color: white; font-size: 24px; font-weight: bold; }
+    .overlay-title.game-over { color: red; }
+    .overlay-sub { color: #ccc; font-size: 13px; }
+    .btn {
+      padding: 8px 20px;
+      background: green;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
     }
 
   </style>
@@ -69,9 +94,36 @@
         return <div style={style}></div>
       }
 
-      const Board = ({ snake, food }) => {
+      const Overlay = ({ type, score, onStart }) => (
+        <div className="overlay">
+          {type === 'start' ? (
+            <>
+              <div className="overlay-title">SNAKE</div>
+              <div className="overlay-sub">
+                USA LAS FLECHAS PARA MOVER
+              </div>
+              <button className="btn" onClick={onStart}>INICIAR</button>
+            </>
+          ) : (
+            <>
+              <div className="overlay-title game-over">GAME OVER</div>
+              <div className="overlay-sub">PUNTAJE FINAL: {score}</div>
+              <button className="btn" onClick={onStart}>REINICIAR</button>
+            </>
+          )}
+        </div>
+      )
+
+      const Board = ({ snake, food, gameState, score, onStart }) => {
         return (
           <main className="board">
+            {(gameState === 'idle' || gameState === 'over') && (
+              <Overlay
+                type={gameState === 'idle' ? 'start' : 'over'}
+                score={score}
+                onStart={onStart}
+              />
+            )}
             <Snake snake={snake} />
             <Food food={food} />
           </main>
@@ -88,17 +140,24 @@
 
       const Game = () => {
         const [direction, setDirection] = React.useState('ArrowRight')
-        const [gameOver, setGameOver] = React.useState(false)
+        const [gameState, setGameState] = React.useState('idle')
         const [score, setScore] = React.useState(0)
         const [snake, setSnake] = React.useState([
-          { x: 5, y: 8 },
-          { x: 6, y: 8 },
           { x: 7, y: 8 },
+          { x: 6, y: 8 },
+          { x: 5, y: 8 },
         ])
         const [food, setFood] = React.useState({
           x: Math.floor(Math.random() * 15) + 1,
           y: Math.floor(Math.random() * 15) + 1,
         })
+        const handleStart = () => {
+          setSnake([{ x: 7, y: 8 }, { x: 6, y: 8 }, { x: 5, y: 8 }])
+          setFood({ x: Math.floor(Math.random() * 15) + 1, y: Math.floor(Math.random() * 15) + 1 })
+          setDirection('ArrowRight')
+          setScore(0)
+          setGameState('playing')
+        }
 
         React.useEffect(() => {
           const handleKeyDown = (e) => {
@@ -117,7 +176,7 @@
         }, [])
 
         React.useEffect(() => {
-          if (gameOver) return
+          if (gameState !== 'playing') return
 
           const interval = setInterval(() => {
             setSnake((prev) => {
@@ -151,7 +210,7 @@
               )
 
               if (hitSelf) {
-                setGameOver(true)
+                setGameState('over')
                 return prev
               }
 
@@ -171,16 +230,15 @@
 
               return [newHead, ...prev.slice(0, prev.length - 1)]
             })
-          }, 1000)
+          }, 300)
 
           return () => clearInterval(interval)
-        }, [direction, gameOver, food])
+        }, [direction, gameState, food])
 
         return (
           <>
             <Score score={score} />
-            {gameOver && <h1 style={{ color: 'red' }}>GAME OVER</h1>}
-            <Board snake={snake} food={food} />
+            <Board snake={snake} food={food} gameState={gameState} score={score} onStart={handleStart} />
           </>
         )
       }
